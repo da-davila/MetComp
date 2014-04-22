@@ -1,0 +1,10 @@
+all: plot_solutions.pdf volterra.x
+
+plot_solutions.pdf : plot_solutions.py
+	python plot_solutions.py
+plot_solutions.py : volterra.x
+	volterra_lotka.x>CondIni.dat
+volterra.x : volterra_lotka.c
+	cc volterra_lotka.c -lm -o volterra.x
+
+
