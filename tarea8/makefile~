@@ -1,0 +1,7 @@
+all: alpha_beta.png
+
+alpha_beta.png: LineasEmision.py lotka_volterra_obs.dat
+	python LineasEmision.py
+
+lotka_volterra_obs.dat: 
+	wget https://raw.githubusercontent.com/forero/ComputationalMethodsData/master/homework/hw_8/lotka_volterra_obs.dat
