@@ -1,6 +1,8 @@
 import numpy as np
 import pylab as plt
 from math import *
+import matplotlib.pyplot as plt
+from scipy.interpolate import griddata
 
 obs_data = np.loadtxt("energy_counts.dat")
 num_energy = obs_data[:,0]
@@ -23,12 +25,12 @@ like_walk = np.empty((0))
 
 #Se corrio el programa varias veces para encontrar el orden de magnitud de cada variable, reemplazando el valor inicial por el resultado del paso anterior, de acuerdo a esto, sera necesario dar pasos de diferente longitud para cada una.
 A_walk = np.append(A_walk,10**16)
-B_walk = np.append(B_walk,1000)
+B_walk = np.append(B_walk,1900)
 E_zero_walk = np.append(E_zero_walk,1387.65)
 alpha_walk = np.append(alpha_walk, 100)
-sigma_walk = np.append(sigma_walk,0)
+sigma_walk = np.append(sigma_walk,-2)
 
-n_steps = 100000
+n_steps = 10000
 
 like_initial = Likelihood (n_counts,model(num_energy,A_walk[0], B_walk[0], E_zero_walk[0], alpha_walk[0], sigma_walk[0]))
 like_walk = np.append(like_walk, like_initial)
@@ -36,8 +38,8 @@ like_walk = np.append(like_walk, like_initial)
 for i in range(n_steps - 1):
     #como cada parametro tiene diferente orden de magnitud, cada uno tiene una longitud de paso diferente
     A_prime = np.random.normal(A_walk[i], 10**13)
-    B_prime = np.random.normal(B_walk[i], 1)
-    E_zero_prime = np.random.normal(E_zero_walk[i], 1)
+    B_prime = np.random.normal(B_walk[i], 10)
+    E_zero_prime = np.random.normal(E_zero_walk[i], 10)
     alpha_prime = np.random.normal(alpha_walk[i], 0.1)
     sigma_prime = np.random.normal(sigma_walk[i], 0.01)
 
@@ -77,13 +79,45 @@ best_E_zero = E_zero_walk[max_like_index]
 best_alpha = alpha_walk[max_like_index]
 best_sigma = sigma_walk[max_like_index]
 
+dA = best_A/2.0
+dB = best_B/2.0
+dE_zero= best_E_zero/2.0
+dalpha = best_alpha/2.0
+dsigma = -best_sigma/2.0
+
+index_A = np.where((np.abs(B_walk-best_B)<dB) & (np.abs(E_zero_walk-best_E_zero)<dE_zero) & (np.abs(alpha_walk-best_alpha)<dalpha) & (np.abs(sigma_walk-best_sigma)<dsigma))
+selected_As = A_walk[index_A] - best_A
+lA=(-1)*like_walk[index_A]
+inc_A= np.sqrt(((best_A-selected_As)**2)/(2*lA**2))
+
+
+index_B = np.where((np.abs(A_walk-best_A)<dA) & (np.abs(E_zero_walk-best_E_zero)<dE_zero) & (np.abs(alpha_walk-best_alpha)<dalpha) & (np.abs(sigma_walk-best_sigma)<dsigma))
+selected_Bs=B_walk[index_B] - best_B
+lB=(-1)*like_walk[index_B]
+inc_B= np.sqrt(((best_B-selected_Bs)**2)/(2*lB**2))
+
+index_Ezero = np.where((np.abs(B_walk-best_B)<dB) & (np.abs(A_walk-best_A)<dA) & (np.abs(alpha_walk-best_alpha)<dalpha) & (np.abs(sigma_walk-best_sigma)<dsigma))
+selected_Ezeros=E_zero_walk[index_Ezero] - best_E_zero
+lEzero=(-1)*like_walk[index_Ezero]
+inc_Ezero= np.sqrt(((best_E_zero-selected_Ezeros)**2)/(2*lEzero**2))
+
+index_alpha = np.where((np.abs(B_walk-best_B)<dB) & (np.abs(E_zero_walk-best_E_zero)<dE_zero) & (np.abs(A_walk-best_A)<dA) & (np.abs(sigma_walk-best_sigma)<dsigma))
+selected_alphas=alpha_walk[index_alpha] - best_alpha
+lalpha=(-1)*like_walk[index_alpha]
+inc_alpha= np.sqrt(((best_alpha-selected_alphas)**2)/(2*lalpha**2))
+
+index_sigma = np.where((np.abs(B_walk-best_B)<dB) & (np.abs(E_zero_walk-best_E_zero)<dE_zero) & (np.abs(alpha_walk-best_alpha)<dalpha) & (np.abs(A_walk-best_A)<dA))
+selected_sigmas=sigma_walk[index_sigma] - best_sigma
+lsigma=(-1)*like_walk[index_sigma]
+inc_sigma= np.sqrt(((best_sigma-selected_sigmas)**2)/(2*lsigma**2))
+
 
 print "El valor de A es", best_A
 print "El valor de B es", best_B
 print "El valor de E_0 es", best_E_zero
 print "El valor de alpha es", best_alpha
 print "El valor de sigma es", best_sigma
-
+print "Las incertidumbres en A, B, E_0, alpha, sigma son:",np.amax(inc_A), np.amax(inc_B), np.amax(inc_Ezero), np.amax(inc_alpha), np.amax(inc_sigma), "respectivamente."
 
 
 
@@ -101,4 +135,59 @@ count, bins, ignored =plt.hist(alpha_walk, 20, normed=True)
 plt.show()
 count, bins, ignored =plt.hist(sigma_walk, 20, normed=True)
 plt.show()
+
+
+plt.plot(A_walk,B_walk)
+plt.xlabel('$A$')
+plt.ylabel('$B$')
+plt.title('$A$ vs. $B$')
+plt.show()
+plt.plot(A_walk,E_zero_walk)
+plt.xlabel('$A$')
+plt.ylabel('$E_0$')
+plt.title('$A$ vs. $E_0$')
+plt.show()
+plt.plot(A_walk,sigma_walk)
+plt.xlabel('$A$')
+plt.ylabel('$\sigma$')
+plt.title('$A$ vs. $\sigma$')
+plt.show()
+plt.plot(A_walk,alpha_walk)
+plt.xlabel('$A$')
+plt.ylabel('$\\alpha$')
+plt.title('$A$ vs. $\\alpha$')
+plt.show()
+plt.plot(B_walk,E_zero_walk)
+plt.xlabel('$B$')
+plt.ylabel('$E_0$')
+plt.title('$B$ vs. $E_0$')
+plt.show()
+plt.plot(B_walk,sigma_walk)
+plt.xlabel('$B$')
+plt.ylabel('$\sigma$')
+plt.title('$B$ vs. $\sigma$')
+plt.show()
+plt.plot(B_walk,alpha_walk)
+plt.xlabel('$B$')
+plt.ylabel('$\\alpha$')
+plt.title('$B$ vs. $\\alpha$')
+plt.show()
+plt.plot(E_zero_walk,sigma_walk)
+plt.xlabel('$E_0$')
+plt.ylabel('$\sigma$')
+plt.title('$E0$ vs. $\sigma$')
+plt.show()
+plt.plot(E_zero_walk,alpha_walk)
+plt.xlabel('$E_0$')
+plt.ylabel('$\\alpha$')
+plt.title('$E_0$ vs. $\\alpha$')
+plt.show()
+plt.plot(sigma_walk,alpha_walk)
+plt.xlabel('$\sigma$')
+plt.ylabel('$\\alpha$')
+plt.title('$\sigma$ vs. $\\alpha$')
+plt.show()
+
+
+
 
