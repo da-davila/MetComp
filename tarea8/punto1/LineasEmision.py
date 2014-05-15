@@ -30,7 +30,7 @@ E_zero_walk = np.append(E_zero_walk,1387.65)
 alpha_walk = np.append(alpha_walk, 100)
 sigma_walk = np.append(sigma_walk,-2)
 
-n_steps = 10000
+n_steps = 150000
 
 like_initial = Likelihood (n_counts,model(num_energy,A_walk[0], B_walk[0], E_zero_walk[0], alpha_walk[0], sigma_walk[0]))
 like_walk = np.append(like_walk, like_initial)
